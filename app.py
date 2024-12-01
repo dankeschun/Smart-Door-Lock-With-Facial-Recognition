@@ -8,12 +8,18 @@ import pickle
 app = Flask(__name__)
 
 # Load the pre-trained FaceNet model and the database
-with open("data.pkl", "rb") as myfile:
-    database = pickle.load(myfile)
+try:
+    with open("data.pkl", "rb") as myfile:
+        database = pickle.load(myfile)
+except FileNotFoundError:
+    raise RuntimeError("Error: 'data.pkl' not found! Ensure the file is in the correct location.")
+
 MyFaceNet = FaceNet()
 
 # Haar Cascade for face detection
-HaarCascade = cv2.CascadeClassifier(cv2.samples.findFile(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'))
+HaarCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+if HaarCascade.empty():
+    raise RuntimeError("Error loading Haar Cascade for face detection!")
 
 # Function to process the uploaded image and detect faces
 def recognize_face(img):
@@ -40,7 +46,7 @@ def recognize_face(img):
     identity = "Unknown"
     
     for key, value in database.items():
-        dist = np.linalg.norm(value - signature)
+        dist = np.linalg.norm(value - signature / np.linalg.norm(signature))
         if dist < min_dist:
             min_dist = dist
             identity = key
@@ -61,6 +67,9 @@ def recognize():
     # Read the image file into OpenCV
     img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
 
+    if img is None:
+        return jsonify({"error": "Invalid image file"}), 400
+
     # Process the image
     result = recognize_face(img)
     
@@ -68,4 +77,4 @@ def recognize():
     return jsonify({"result": result})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
