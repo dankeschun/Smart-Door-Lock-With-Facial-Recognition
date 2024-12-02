@@ -46,6 +46,10 @@ def recognize_face(img):
 
     return identity
 
+@app.route('/test', methods=['GET'])
+def test():
+    return jsonify({'message': 'Service is live!'}), 200
+
 @app.route("/recognize", methods=["POST"])
 def recognize():
     if "file" not in request.files:
