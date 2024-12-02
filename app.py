@@ -20,11 +20,11 @@ if HaarCascade.empty():
     raise RuntimeError("Error loading Haar Cascade for face detection!")
 
 def recognize_face(img):
+    img = cv2.resize(img, (800, 800))
     gbr = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     gbr_array = np.asarray(gbr)
-
-    wajah = HaarCascade.detectMultiScale(gbr_array, 1.1, 4)
     
+    wajah = HaarCascade.detectMultiScale(gbr_array, 1.1, 4)
     if len(wajah) == 0:
         return "No Face Detected"
     
@@ -32,7 +32,7 @@ def recognize_face(img):
     face = gbr_array[y1:y1+h, x1:x1+w]
     face = cv2.resize(face, (160, 160)) 
     face = np.expand_dims(face, axis=0)
-    
+
     signature = MyFaceNet.embeddings(face)
     
     min_dist = 100
@@ -45,6 +45,7 @@ def recognize_face(img):
             identity = key
 
     return identity
+
 
 @app.route('/test', methods=['GET'])
 def test():
